@@ -17,9 +17,6 @@ const manifest: Manifest.WebExtensionManifest = {
     default_popup: 'src/pages/popup/index.html',
     default_icon: 'icon-34.png',
   },
-  chrome_url_overrides: {
-    newtab: 'src/pages/newtab/index.html',
-  },
   icons: {
     '128': 'icon-128.png',
   },
@@ -30,13 +27,13 @@ const manifest: Manifest.WebExtensionManifest = {
       css: ['contentStyle.css'],
     },
   ],
-  devtools_page: 'src/pages/devtools/index.html',
   web_accessible_resources: [
     {
       resources: ['contentStyle.css', 'icon-128.png', 'icon-34.png'],
       matches: [],
     },
   ],
+  permissions: ['storage', 'tabs'],
 };
 
 export default manifest;
