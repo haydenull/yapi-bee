@@ -23,7 +23,7 @@ function App() {
     // localStorage.setItem('token', token)
     // localStorage.setItem('apiId', apiId)
     // 存储到 local
-    chrome.storage.local.set({ projectList: values.projectList }, () => {
+    chrome.storage.sync.set({ projectList: values.projectList }, () => {
       console.log('保存成功')
       message.success('Save Success!')
     })
@@ -32,7 +32,7 @@ function App() {
 
   useEffect(() => {
     // 从 local 获取数据
-    chrome.storage.local.get(['projectList'], (result) => {
+    chrome.storage.sync.get(['projectList'], (result) => {
       console.log('获取成功', result)
       form.setFieldsValue({
         projectList: result.projectList

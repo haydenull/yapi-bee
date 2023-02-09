@@ -72,7 +72,7 @@ function App() {
 
   useEffect(() => {
     // 从 local 获取数据
-    chrome.storage.local.get(['projectList'], (result) => {
+    chrome.storage.sync.get(['projectList'], (result) => {
       console.log('获取成功', result)
       boot(result.projectList)
     })
