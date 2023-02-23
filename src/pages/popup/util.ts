@@ -1,6 +1,3 @@
-// object integer string array
-const TYPE = {}
-
 type IInteger = {
   type: 'integer';
   description?: string;
@@ -31,7 +28,7 @@ type IData = IInteger | IString | IArray | IObject | INumber | IBoolean
 const genSpace = (level = 0) => {
   return ' '.repeat(level * 2)
 }
-const genDescription = (description?: string, space: string = '') => {
+const genDescription = (description?: string, space = '') => {
   return description ? space + `/** ${description} */\n` : ''
 }
 const genKey = (key?: string) => key ? `${key}: ` : ''

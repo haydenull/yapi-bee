@@ -50,7 +50,7 @@ function App() {
             {(fields, { add, remove }) => (
               <>
                 {fields.map((field, index) => (
-                  <div className="flex">
+                  <div className="flex" key={field.key}>
                     {/* <Form.Item label="Yapi Domain" name="domain" rules={[{ required: true }]}> */}
                     <Form.Item label={`Project Name ${index + 1}`} name={[field.name, 'name']}>
                       <Input placeholder="Project Name" />
