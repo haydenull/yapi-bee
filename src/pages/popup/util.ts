@@ -1,42 +1,13 @@
-type IInteger = {
-  type: 'integer';
-  description?: string;
-}
-type INumber = {
-  type: 'number';
-  description?: string;
-}
-type IBoolean = {
-  type: 'boolean';
-  description?: string;
-}
-type IString = {
-  type: 'string';
-  description?: string;
-}
-type IArray = {
-  type: 'array';
-  items: IData;
-  description?: string;
-}
-type IObject = {
-  type: 'object';
-  properties: Record<string, IData>;
-  description?: string;
-}
-type IData = IInteger | IString | IArray | IObject | INumber | IBoolean
+import { IData, IObject } from './interface'
+
 const genSpace = (level = 0) => {
   return ' '.repeat(level * 2)
 }
 const genDescription = (description?: string, space = '') => {
   return description ? space + `/** ${description} */\n` : ''
 }
-const genKey = (key?: string) => key ? `${key}: ` : ''
-const genType = ({data, level = 0, key}: {
-  data: IData;
-  level?: number;
-  key?: string;
-}): string => {
+const genKey = (key?: string) => (key ? `${key}: ` : '')
+const genType = ({ data, level = 0, key }: { data: IData; level?: number; key?: string }): string => {
   const { type, description } = data
   if (type === 'integer' || type === 'number') {
     const space = genSpace(level)
@@ -57,9 +28,11 @@ const genType = ({data, level = 0, key}: {
   }
   if (type === 'object') {
     const { properties } = data
-    const _type = Object.keys(properties).map(_key => {
-      return genType({ data: properties[_key], key: _key, level: level + 1 }) + ';'
-    }).join('\n')
+    const _type = Object.keys(properties)
+      .map((_key) => {
+        return genType({ data: properties[_key], key: _key, level: level + 1 }) + ';'
+      })
+      .join('\n')
     const space = genSpace(level)
     return genDescription(description, space) + space + genKey(key) + `{\n${_type}\n` + space + '}'
   }
@@ -77,18 +50,34 @@ const genMockConfigKey = (key?: string, isArray = false) => {
   if (!key) return ''
   return (isArray ? `'${key}|20'` : key) + ': '
 }
-const genMock = ({ data, level = 0, key, isArray = false }: {
-  data: IData;
-  level?: number;
-  key?: string;
-  isArray?: boolean;
-}) : string => {
+const genMock = ({
+  data,
+  level = 0,
+  key,
+  isArray = false,
+}: {
+  data: IData
+  level?: number
+  key?: string
+  isArray?: boolean
+}): string => {
   const { type } = data
   const primitiveBracketStart = isArray ? '[' : ''
   const primitiveBracketEnd = isArray ? ']' : ''
-  if (type === 'integer' || type === 'number') return genSpace(level) + genMockConfigKey(key, isArray) + primitiveBracketStart + "'@integer(1, 100)'" + primitiveBracketEnd
-  if (type === 'boolean') return genSpace(level) + genMockConfigKey(key, isArray) + primitiveBracketStart + "'@boolean'" + primitiveBracketEnd
-  if (type === 'string') return genSpace(level) + genMockConfigKey(key, isArray) + primitiveBracketStart + "'@cword(1, 10)'" + primitiveBracketEnd
+  if (type === 'integer' || type === 'number')
+    return (
+      genSpace(level) +
+      genMockConfigKey(key, isArray) +
+      primitiveBracketStart +
+      "'@integer(1, 100)'" +
+      primitiveBracketEnd
+    )
+  if (type === 'boolean')
+    return genSpace(level) + genMockConfigKey(key, isArray) + primitiveBracketStart + "'@boolean'" + primitiveBracketEnd
+  if (type === 'string')
+    return (
+      genSpace(level) + genMockConfigKey(key, isArray) + primitiveBracketStart + "'@cword(1, 10)'" + primitiveBracketEnd
+    )
   if (type === 'array') {
     const { items } = data
     const _type = genMock({ data: items, key, level: level, isArray: true })
@@ -96,12 +85,21 @@ const genMock = ({ data, level = 0, key, isArray = false }: {
   }
   if (type === 'object') {
     const { properties } = data
-    const _type = Object.keys(properties).map(_key => {
-      return genMock({ data: properties[_key], key: _key, level: level + 1 }) + ','
-    }).join('\n')
+    const _type = Object.keys(properties)
+      .map((_key) => {
+        return genMock({ data: properties[_key], key: _key, level: level + 1 }) + ','
+      })
+      .join('\n')
     const objectBracketStart = isArray ? '[{' : '{'
     const objectBracketEnd = isArray ? '}]' : '}'
-    return genSpace(level) + genMockConfigKey(key, isArray) + objectBracketStart + `\n${_type}\n` + genSpace(level) + objectBracketEnd
+    return (
+      genSpace(level) +
+      genMockConfigKey(key, isArray) +
+      objectBracketStart +
+      `\n${_type}\n` +
+      genSpace(level) +
+      objectBracketEnd
+    )
   }
   return ''
 }
@@ -113,15 +111,18 @@ export const genMockConfig = (body: IData) => {
   return genMock({ data: body, level: 0 })
 }
 
-
-export const genReqQueryType = (query: {
-  name: string;
-  desc?: string;
-  required?: '0' | '1';
-}[]) => {
+export const genReqQueryType = (
+  query: {
+    name: string
+    desc?: string
+    required?: '0' | '1'
+  }[],
+) => {
   if (query?.length <= 0) return ''
-  return `{\n${query.map(({ name, desc, required }) => {
-    const _desc = desc ? genSpace(1) + `/** ${desc} */\n` : ''
-    return _desc + genSpace(1) + `${name}${required === '1' ? '' : '?'}: string;`
-  }).join('\n')}\n}`
+  return `{\n${query
+    .map(({ name, desc, required }) => {
+      const _desc = desc ? genSpace(1) + `/** ${desc} */\n` : ''
+      return _desc + genSpace(1) + `${name}${required === '1' ? '' : '?'}: string;`
+    })
+    .join('\n')}\n}`
 }

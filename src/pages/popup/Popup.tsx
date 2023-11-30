@@ -4,6 +4,8 @@ import { getAPIDetail } from './services/yapi'
 import { genMockConfig, genReqQueryType, genResponseBody } from './util'
 import CodeBlock from './components/CodeBlock'
 import genColumns, { DEFAULT_DATA_PATH } from './helper/genColumns'
+import { genValibotSchema } from './helper/genValibot'
+import { ValibotSchemaOption } from './components/ValibotSchemaOption'
 
 type IForm = {
   token: string
@@ -11,7 +13,6 @@ type IForm = {
 }
 
 function App() {
-
   const [form] = Form.useForm<IForm>()
 
   // yapi 返回值比较复杂，这里只是简单的展示
@@ -26,6 +27,8 @@ function App() {
     reqBodyType?: string
     // 响应体类型
     resBodyType?: string
+    /** valibot schema */
+    valibotSchema?: string
     // mock 数据
     mock?: string
   }>()
@@ -42,22 +45,25 @@ function App() {
     const queryData = async (apiId: string, token: string) => {
       const res = await getAPIDetail(apiId, token)
       const data = await res.json()
-      setApiInfo(data.data)
       const { req_query, req_body_other = '{}', res_body = '{}' } = data.data
       const reqBody = JSON.parse(req_body_other)
       const resBody = JSON.parse(res_body)
+      setApiInfo({ ...data.data, req_body_other: reqBody, res_body: resBody })
       setData({
         reqQueryType: genReqQueryType(req_query),
         reqBodyType: genResponseBody(reqBody),
         resBodyType: genResponseBody(resBody),
+        valibotSchema: await genValibotSchema(resBody),
         mock: genMockConfig(resBody),
       })
     }
-    const boot = (projectList: {
-      name: string
-      id: string
-      token: string
-    }[]) => {
+    const boot = (
+      projectList: {
+        name: string
+        id: string
+        token: string
+      }[],
+    ) => {
       // 获取当前 tab 的 url
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         const tab = tabs[0]
@@ -97,9 +103,8 @@ function App() {
         <Button type="primary" onClick={onClickOk}>🌸 小蜜蜂帮帮我</Button>
       </Form> */}
 
-      {
-        apiInfo
-        ? (<>
+      {apiInfo ? (
+        <>
           <Divider />
 
           <Descriptions title="基础信息">
@@ -107,18 +112,23 @@ function App() {
             <Descriptions.Item label="接口地址">{apiInfo?.path}</Descriptions.Item>
             <Descriptions.Item label="请求方法">{apiInfo?.method}</Descriptions.Item>
           </Descriptions>
-        </>)
-        : null
-      }
+        </>
+      ) : null}
 
       <Divider />
 
       <Form layout="inline" form={form} initialValues={{ dataPath: DEFAULT_DATA_PATH }}>
-        <Form.Item label="取值路径" name="dataPath" tooltip="假设接口返回值为 res, 取值路径为 data.data, 那么取出的值为 res.data.data. 另外请确保取出的值是 object[]">
+        <Form.Item
+          label="取值路径"
+          name="dataPath"
+          tooltip="假设接口返回值为 res, 取值路径为 data.data, 那么取出的值为 res.data.data. 另外请确保取出的值是 object[]"
+        >
           <Input style={{ width: 200 }} placeholder="请输入取值路径" />
         </Form.Item>
         <Form.Item>
-          <Button type="primary" onClick={onClickGenColumns}>🌸 生成 Antd Table Columns</Button>
+          <Button type="primary" onClick={onClickGenColumns}>
+            🌸 生成 Antd Table Columns
+          </Button>
         </Form.Item>
       </Form>
 
@@ -129,19 +139,36 @@ function App() {
         {data?.reqQueryType ? <CodeBlock title="请求参数类型" text={data?.reqQueryType} /> : null}
         {data?.reqBodyType ? <CodeBlock title="请求体类型" text={data?.reqBodyType} /> : null}
         {data?.resBodyType ? <CodeBlock title="响应体类型" text={data?.resBodyType} /> : null}
+        {data?.valibotSchema ? (
+          <CodeBlock
+            title={
+              <div className="flex flex-row justify-between">
+                <span>valibot 结构</span>
+                <ValibotSchemaOption
+                  onChange={async (v) => {
+                    setData({
+                      ...data,
+                      valibotSchema: await genValibotSchema(apiInfo.res_body, v),
+                    })
+                  }}
+                />
+              </div>
+            }
+            text={data?.valibotSchema}
+          />
+        ) : null}
         {data?.mock ? <CodeBlock title="Mockjs 配置" text={data?.mock} /> : null}
       </div>
 
-      {
-        !data && !apiInfo
-        ? (
-          <Empty
-            className="mt-10"
-            image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
-            description={<span className="text-gray-400">输入正确的 Token 与 项目 ID 后, 就可以让小蜜蜂帮你生成接口类型啦 🐝</span>}
-          />)
-        : null
-      }
+      {!data && !apiInfo ? (
+        <Empty
+          className="mt-10"
+          image="https://gw.alipayobjects.com/zos/antfincdn/ZHrcdLPrvN/empty.svg"
+          description={
+            <span className="text-gray-400">输入正确的 Token 与 项目 ID 后, 就可以让小蜜蜂帮你生成接口类型啦 🐝</span>
+          }
+        />
+      ) : null}
     </div>
   )
 }
